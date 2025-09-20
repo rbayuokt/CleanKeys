@@ -1,5 +1,7 @@
 # CleanKeys
 
+![cover](docs/cover.png)<br/><br/>
+
 Minimal macOS utility that **pauses your keyboard system-wide** so you can clean it without accidental keystrokes
 
 ## Overview

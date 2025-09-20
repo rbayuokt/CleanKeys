@@ -16,5 +16,4 @@ xcuserdata/
 *.log
 
 # Zip & archives (keep releases out of source)
-*.zip
 EOF
