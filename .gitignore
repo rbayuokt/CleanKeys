@@ -1,0 +1,20 @@
+cat > .gitignore << 'EOF'
+# Xcode / Swift
+.DS_Store
+/build
+/DerivedData
+xcuserdata/
+*.xcuserdatad
+*.moved-aside
+*.xccheckout
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# Logs
+*.log
+
+# Zip & archives (keep releases out of source)
+*.zip
+EOF
