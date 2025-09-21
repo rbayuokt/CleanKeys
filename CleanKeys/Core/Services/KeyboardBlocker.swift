@@ -7,15 +7,24 @@
 
 import Cocoa
 import ApplicationServices
+import AppKit
 
 final class KeyboardBlocker: KeyboardBlocking {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
+    // MARK: - Compatibility
+    private static let systemDefinedType = CGEventType(rawValue: 14)!
+
+    // MARK: - Masks
     private static func maskFor(_ type: CGEventType) -> CGEventMask { CGEventMask(1) << type.rawValue }
     private static let mask: CGEventMask =
-        maskFor(.keyDown) | maskFor(.keyUp) | maskFor(.flagsChanged)
+        maskFor(.keyDown) |
+        maskFor(.keyUp) |
+        maskFor(.flagsChanged) |
+        maskFor(systemDefinedType)
 
+    // MARK: - Tap callback
     private static let callback: CGEventTapCallBack = { _, type, event, refcon in
         guard let refcon = refcon else { return Unmanaged.passUnretained(event) }
         let blocker = Unmanaged<KeyboardBlocker>.fromOpaque(refcon).takeUnretainedValue()
@@ -24,17 +33,23 @@ final class KeyboardBlocker: KeyboardBlocking {
             if let tap = blocker.eventTap { CGEvent.tapEnable(tap: tap, enable: true) }
             return nil
         }
+
         switch type {
         case .keyDown, .keyUp, .flagsChanged:
             return nil
         default:
+            if type.rawValue == systemDefinedType.rawValue {
+                return nil
+            }
             return Unmanaged.passUnretained(event)
         }
     }
 
+    // MARK: - Lifecycle
     func enable() {
         guard eventTap == nil else { return }
         let refcon = Unmanaged.passUnretained(self).toOpaque()
+
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
@@ -42,7 +57,9 @@ final class KeyboardBlocker: KeyboardBlocking {
             eventsOfInterest: Self.mask,
             callback: Self.callback,
             userInfo: refcon
-        ) else { return }
+        ) else {
+            return
+        }
 
         eventTap = tap
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
@@ -62,4 +79,3 @@ final class KeyboardBlocker: KeyboardBlocking {
         eventTap = nil
     }
 }
-
